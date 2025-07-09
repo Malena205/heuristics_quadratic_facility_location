@@ -7,6 +7,7 @@ from pyomo.opt import SolverStatus, TerminationCondition
 import time
 from utils import *
 from pyomo.core.base.constraint import Constraint
+import time
 
 
 def cap_init(m, j):
@@ -176,7 +177,9 @@ def optimize_BUAP_model_editable(m, threads=1, tolerance=0.0,time_limit = 10000)
     opt.options["MIPGap"] = tolerance
     opt.options["NodefileStart"] = 0.5
     opt.options["Time_limit"] = time_limit
+    start_time = time.time()
     res = opt.solve(m, tee=True)
+    end_time = time.time()
 
     if res.solver.termination_condition == TerminationCondition.infeasible or res.solver.termination_condition == TerminationCondition.infeasibleOrUnbounded:
         return False, {}
@@ -197,7 +200,7 @@ def optimize_BUAP_model_editable(m, threads=1, tolerance=0.0,time_limit = 10000)
     results = {"solution_details":
                 {"assignment": assignment, "open_facs": list(m.open_facs), "objective_value": pyo.value(m.obj),
                     "x": results_x, "u": { j: m.u[j].value for j in m.facs },
-                    "lower_bound": res['Problem'][0]['Lower bound'], "solving_time": res.Solver[0]['Time']},
+                    "lower_bound": res['Problem'][0]['Lower bound'], "solving_time": end_time - start_time},
             "model_details":
                 {"users": list(m.users), "facs": list(m.facs), "cap_factor": m.cap_factor.value,
                     "budget_factor": len(m.open_facs)/len(m.facs), "cutoff": m.cutoff.value,
